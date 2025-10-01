@@ -17,13 +17,13 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '9.0.x'
+        dotnet-version: '9.0.102'
 
     - name: Restore dependencies
-      run: dotnet restore ./Parky/Parky.sln
+      run: dotnet restore ./Parky.sln
 
     - name: Build
-      run: dotnet build ./Parky/Parky.sln --no-restore -c Release
+      run: dotnet build ./Parky.sln --no-restore -c Release
 
     - name: Test
-      run: dotnet test ./Parky/Parky.sln --no-build -c Release
+      run: dotnet
