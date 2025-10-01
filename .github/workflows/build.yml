@@ -1,4 +1,4 @@
-name: Build and Test
+name: build
 
 on:
   push:
@@ -17,13 +17,13 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '9.0.102' 
+        dotnet-version: '9.0.x'
 
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore ./Parky/Parky.sln
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build ./Parky/Parky.sln --no-restore -c Release
 
     - name: Test
-      run: dotnet test --no-restore --verbosity normal
+      run: dotnet test ./Parky/Parky.sln --no-build -c Release
