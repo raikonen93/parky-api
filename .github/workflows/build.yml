@@ -26,4 +26,4 @@ jobs:
       run: dotnet build ./Parky.sln --no-restore -c Release
 
     - name: Test
-      run: dotnet
+      run: dotnet test ./Parky.sln --no-build -c Release
