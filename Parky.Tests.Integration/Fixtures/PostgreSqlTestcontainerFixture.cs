@@ -12,7 +12,7 @@ namespace Parky.Tests.Integration.Fixtures
                 .WithDatabase("testDb")
                 .WithUsername("postgres")
                 .WithPassword("postgres")
-                .WithPortBinding(5432, false)
+                .WithPortBinding(0, false)
                 .Build();
         }
 

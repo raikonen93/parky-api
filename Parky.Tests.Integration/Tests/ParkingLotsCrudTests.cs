@@ -6,7 +6,7 @@ using Parky.Tests.Integration.Helpers;
 
 namespace Parky.Tests.Integration.Tests
 {
-    public class ParkingLotsCrudTests : IClassFixture<PostgreSqlTestcontainerFixture>
+    public class ParkingLotsCrudTests : IClassFixture<PostgreSqlTestcontainerFixture>, IAsyncLifetime
     {
         private readonly PostgreSqlTestcontainerFixture _fixture;
         private readonly TestDbContextFactory _dbContextFactory;
@@ -16,10 +16,7 @@ namespace Parky.Tests.Integration.Tests
             _fixture = fixture;
             _dbContextFactory = new TestDbContextFactory(_fixture.PostgreSqlContainer.GetConnectionString());
 
-            using var context = _dbContextFactory.CreateDbContext();
 
-            context.Database.EnsureDeleted();
-            context.Database.Migrate();
         }
 
         [Fact]
@@ -104,6 +101,20 @@ namespace Parky.Tests.Integration.Tests
                    .Should()
                    .ThrowAsync<DbUpdateException>();
 
+        }
+
+        public async Task InitializeAsync()
+        {
+            using var context = _dbContextFactory.CreateDbContext();
+
+            context.Database.EnsureDeleted();
+            await context.Database.MigrateAsync();
+        }
+
+        public async Task DisposeAsync()
+        {
+            using var context = _dbContextFactory.CreateDbContext();
+            await context.Database.EnsureDeletedAsync();
         }
     }
 }
