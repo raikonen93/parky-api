@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Parky.Infrastructure.Context;
@@ -11,9 +12,11 @@ using Parky.Infrastructure.Context;
 namespace Parky.Infrastructure.Migrations
 {
     [DbContext(typeof(ParkyDbContext))]
-    partial class ParkyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251015202431_FixUserRoleConversion")]
+    partial class FixUserRoleConversion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -70,10 +73,6 @@ namespace Parky.Infrastructure.Migrations
                         {
                             t.HasCheckConstraint("CK_Booking_ValidRange", "\"from\" < \"to\"");
                         });
-
-                    b
-                        .HasAnnotation("Npgsql:ExclusionConstraint", "EXCLUDE USING gist (lot_id WITH =, tstzrange(\"from\", \"to\") WITH &&)")
-                        .HasAnnotation("Npgsql:IndexMethod", "gist");
                 });
 
             modelBuilder.Entity("Parky.Domain.Entities.ParkingLot", b =>

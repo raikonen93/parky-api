@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Parky.Infrastructure.Context;
@@ -11,9 +12,11 @@ using Parky.Infrastructure.Context;
 namespace Parky.Infrastructure.Migrations
 {
     [DbContext(typeof(ParkyDbContext))]
-    partial class ParkyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251014111247_AddBookingEntity")]
+    partial class AddBookingEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -53,12 +56,6 @@ namespace Parky.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("user_id");
 
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
                     b.HasKey("Id")
                         .HasName("pk_bookings");
 
@@ -70,10 +67,6 @@ namespace Parky.Infrastructure.Migrations
                         {
                             t.HasCheckConstraint("CK_Booking_ValidRange", "\"from\" < \"to\"");
                         });
-
-                    b
-                        .HasAnnotation("Npgsql:ExclusionConstraint", "EXCLUDE USING gist (lot_id WITH =, tstzrange(\"from\", \"to\") WITH &&)")
-                        .HasAnnotation("Npgsql:IndexMethod", "gist");
                 });
 
             modelBuilder.Entity("Parky.Domain.Entities.ParkingLot", b =>
@@ -115,52 +108,6 @@ namespace Parky.Infrastructure.Migrations
                             t.HasCheckConstraint("CK_ParkingLot_Capacity_Positive", "capacity >= 0");
 
                             t.HasCheckConstraint("CK_ParkingLot_Name_NotEmpty", "char_length(name) > 0");
-                        });
-                });
-
-            modelBuilder.Entity("Parky.Domain.Entities.User", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Password")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("password");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("role");
-
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("username");
-
-                    b.HasKey("Id")
-                        .HasName("pk_users");
-
-                    b.ToTable("users", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Password = "driverpassword",
-                            Role = "Driver",
-                            Username = "driver"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Password = "ownerpassword",
-                            Role = "Owner",
-                            Username = "owner"
                         });
                 });
 
