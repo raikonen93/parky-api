@@ -9,6 +9,11 @@ namespace Parky.Application.Mapping
         public ParkyMappingProfile()
         {
             CreateMap<ParkingLotDto, ParkingLot>().ReverseMap();
+            CreateMap<BookingDto, Booking>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.Lot, opt => opt.Ignore());
+
+            CreateMap<Booking, BookingDto>();
         }
     }
 }
