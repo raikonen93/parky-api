@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Parky.Application.Dtos;
@@ -9,6 +10,7 @@ namespace Parky.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Owner")]
     public class ParkingLotsController : ControllerBase
     {
         private readonly ParkyDbContext _context;
@@ -45,6 +47,8 @@ namespace Parky.Api.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutParkingLot(int id, ParkingLotDto parkingLot)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
             var existingParkingLot = await _context.ParkingLots.FindAsync(id);
 
             if (existingParkingLot == null)
@@ -61,6 +65,8 @@ namespace Parky.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<ParkingLot>> PostParkingLot(ParkingLotDto parkingLot)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
             var itemToadd = _mapper.Map<ParkingLot>(parkingLot);
             itemToadd.CreatedAt = DateTime.UtcNow;
             _context.ParkingLots.Add(itemToadd);
