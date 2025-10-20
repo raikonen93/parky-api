@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Parky.Application.Dtos;
+using Parky.Application.Interfaces;
+using Parky.Domain.Enums;
 
 namespace Parky.Api.Controllers
 {
@@ -12,82 +15,77 @@ namespace Parky.Api.Controllers
     public class KafkaController : ControllerBase
     {
         private readonly ILogger<KafkaController> _logger;
+        private readonly IKafkaProducerService _kafka;
 
-        public KafkaController(ILogger<KafkaController> logger)
+        public KafkaController(ILogger<KafkaController> logger, IKafkaProducerService kafka)
         {
             _logger = logger;
+            _kafka = kafka;
         }
 
         /// <summary>
         /// Publishes an event to a Kafka topic (fire-and-forget).
         /// </summary>
         [HttpPost("publish")]
-        public async Task<IActionResult> PublishEvent([FromBody] object message)
+        public async Task<IActionResult> PublishEvent([FromBody] string message)
         {
             _logger.LogInformation("[Kafka] Publishing event: {@Message}", message);
-            // TODO: Use Confluent.Kafka Producer to send to topic
-            await Task.CompletedTask;
-            return Ok(new { Status = "Published", Message = message });
-        }
-
-        /// <summary>
-        /// Simulates consuming messages from a Kafka topic.
-        /// </summary>
-        [HttpGet("consume")]
-        public async Task<IActionResult> ConsumeTopic([FromQuery] string topic)
-        {
-            _logger.LogInformation("[Kafka] Subscribing to topic: {Topic}", topic);
-            // TODO: Use Kafka consumer (poll loop)
-            await Task.Delay(200);
-            return Ok(new { Topic = topic, Status = "Consumed sample messages" });
-        }
-
-        /// <summary>
-        /// Simulates delayed (scheduled) message publishing.
-        /// </summary>
-        [HttpPost("schedule")]
-        public async Task<IActionResult> ScheduleMessage([FromBody] object message)
-        {
-            _logger.LogInformation("[Kafka] Scheduling message: {@Message}", message);
-            // TODO: Implement delayed message (store + produce later)
-            await Task.CompletedTask;
-            return Ok(new { Status = "Scheduled", Message = message });
+            return await PublishToKafkaAsync(message, "parky.publish_event", "Publishing event");
         }
 
         /// <summary>
         /// Simulates message replay from a Kafka topic using offsets.
         /// </summary>
         [HttpPost("replay")]
-        public async Task<IActionResult> ReplayMessages([FromBody] object replayRequest)
+        public async Task<IActionResult> ReplayMessages()
         {
-            _logger.LogInformation("[Kafka] Replaying messages based on offset request: {@Request}", replayRequest);
-            // TODO: Use KafkaConsumer.Assign() and Seek() to reprocess messages
-            await Task.CompletedTask;
-            return Ok(new { Status = "Replayed messages", Replay = replayRequest });
+            _logger.LogInformation("[Kafka] Replaying messages based on offset request");
+
+            var command = new KafkaCommanDto
+            {
+                Command = KafkaCommand.Reply,
+                TopicName = "parky.publish_event"
+            };
+
+            return await PublishToKafkaAsync(command, "parky.command", "Replaying messages based on offset request");
         }
 
         /// <summary>
         /// Simulates a consumer error (for testing DLQ and retries).
         /// </summary>
         [HttpPost("simulate-error")]
-        public IActionResult SimulateError()
+        public async Task<IActionResult> SimulateError()
         {
             _logger.LogWarning("[Kafka] Simulating consumer failure...");
-            throw new InvalidOperationException("Simulated Kafka consumer failure");
+
+            var command = new KafkaCommanDto
+            {
+                Command = KafkaCommand.SimulateError,
+                TopicName = "parky.publish_event"
+            };
+            return await PublishToKafkaAsync("error", "parky.command", "Replaying messages based on offset request");
         }
 
         /// <summary>
         /// Health check for Kafka controller.
         /// </summary>
         [HttpGet("health")]
-        public IActionResult Health()
+        public async Task<IActionResult> Health()
         {
-            return Ok(new
-            {
-                Broker = "Kafka",
-                Status = "Healthy",
-                Timestamp = DateTime.UtcNow
-            });
+            var result = await _kafka.CheckHealthAsync();
+            return result.Status == HealthStatus.Healthy
+                ? Ok(new { Status = "Healthy", Timestamp = DateTime.UtcNow })
+                : StatusCode(503, new { Status = "Unhealthy", result.Description });
+        }
+
+        private async Task<IActionResult> PublishToKafkaAsync<T>(T message, string topic, string logAction)
+        {
+            _logger.LogInformation("[Kafka] {Action}: {@Message}", logAction, message);
+            var result = await _kafka.ProduceAsync(message, topic);
+
+            return result == Confluent.Kafka.PersistenceStatus.Persisted
+                ? Ok(new { Status = "Published", Topic = topic, Message = message })
+                : BadRequest(new { Status = "Failed", Topic = topic, PersistenceStatus = result.ToString() });
         }
     }
 }

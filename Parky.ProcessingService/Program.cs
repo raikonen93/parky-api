@@ -1,4 +1,6 @@
-﻿using Serilog;
+﻿using Parky.Application.Interfaces;
+using Parky.Infrastructure.Services;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +23,9 @@ builder.Host.UseSerilog((context, config) =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddSingleton<IKafkaCommandHandler, KafkaCommandHandler>();
+builder.Services.AddHostedService<KafkaBackgroundConsumer>();
 
 var app = builder.Build();
 

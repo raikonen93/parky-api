@@ -142,6 +142,8 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<IUserService, UserService>();
 
+builder.Services.AddSingleton<IKafkaProducerService, KafkaProducerService>();
+
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
